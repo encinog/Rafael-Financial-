@@ -1,0 +1,186 @@
+<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><meta name='apple-mobile-web-app-capable' content='yes'><title>Rafael Financial Command Center v2</title><style>
+:root{--bg:#07101f;--card:#121c2e;--muted:#94a3b8;--text:#eef2ff;--accent:#38bdf8;--good:#34d399;--warn:#f59e0b;--bad:#fb7185;--line:#26344d}*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#07101f,#111827);color:var(--text)}.wrap{max-width:1220px;margin:auto;padding:22px}.top{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap}h1{margin:0;font-size:clamp(27px,4vw,42px)}h2{font-size:18px;margin:0 0 12px}.sub,.small{color:var(--muted)}.small{font-size:12px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}.card{background:rgba(18,28,46,.95);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 12px 30px #0003}.metric b{font-size:25px;display:block;margin-top:5px}.metric span,.label{color:var(--muted);font-size:12px}.main{display:grid;grid-template-columns:380px 1fr;gap:14px;margin-top:14px}.inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px}.wide{grid-column:1/-1}label{font-size:12px;color:var(--muted)}input,select{width:100%;margin-top:5px;background:#0b1425;border:1px solid #334155;color:white;border-radius:10px;padding:10px;font-size:15px}.section{border-top:1px solid var(--line);margin-top:14px;padding-top:13px}.section:first-of-type{border:0;margin-top:8px;padding-top:0}.sectiontitle{font-weight:700;font-size:13px;margin-bottom:9px}.chart{height:310px;position:relative}canvas{width:100%;height:100%}.tablewrap{overflow:auto;max-height:355px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{position:sticky;top:0;background:#121c2e;color:#94a3b8}.green{color:var(--good)}.warn{color:var(--warn)}button{border:1px solid #334155;border-radius:10px;padding:10px 13px;background:#1e293b;color:white;font-weight:650}.preset{display:flex;gap:7px;flex-wrap:wrap}.scenario{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.scenario .box{background:#0b1425;border:1px solid var(--line);border-radius:13px;padding:12px}.scenario b{display:block;font-size:20px;margin:5px 0}.badge{display:inline-block;border-radius:99px;padding:4px 8px;font-size:11px;font-weight:700;background:#163047;color:#7dd3fc}.goodbadge{background:#12352d;color:#6ee7b7}.badbadge{background:#431d2a;color:#fda4af}.note{font-size:12px;line-height:1.5;color:#cbd5e1;margin-top:11px}@media(max-width:900px){.grid{grid-template-columns:1fr 1fr}.main{grid-template-columns:1fr}.scenario{grid-template-columns:1fr 1fr}}@media(max-width:500px){.wrap{padding:13px}.card{padding:13px}.inputs{grid-template-columns:1fr 1fr}.scenario{grid-template-columns:1fr 1fr}.metric b{font-size:21px}}
+
+.scoreboard{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0 22px}
+.score{padding:16px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10)}
+.score .k{font-size:.78rem;opacity:.72;text-transform:uppercase;letter-spacing:.05em}
+.score .v{font-size:1.65rem;font-weight:800;margin-top:5px}
+.score .s{font-size:.78rem;opacity:.68;margin-top:4px}
+@media(max-width:800px){.scoreboard{grid-template-columns:repeat(2,minmax(0,1fr))}.score .v{font-size:1.35rem}}
+
+.scenarioLab{margin:8px 0 22px;padding:15px;border-radius:14px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.10)}
+.scenarioBtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.scenarioBtns button{padding:10px 13px;border-radius:10px;border:1px solid rgba(255,255,255,.14);cursor:pointer;font-weight:700}
+.scenarioStatus{margin-top:10px;font-size:.86rem;opacity:.78}
+</style><meta name="theme-color" content="#111827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Rafael Finance"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"></head><body><div class='wrap'><div class='top'><div><h1>Financial Command Center <span class='badge'>v2</span></h1><div class='sub'>Work-optional planning • Guard + VA + civilian income modeled separately</div></div><button id='reset'>Reset</button></div>
+<div class='grid'><div class='card metric'><span>Investments today</span><b id='mAssets'></b></div><div class='card metric'><span>Guard multiplier</span><b id='mMult'></b></div><div class='card metric'><span>Guard pension estimate</span><b id='mGuard'></b></div><div class='card metric'><span>Portfolio at age 90</span><b id='m90'></b></div></div>
+<div class='main'><div class='card'><div class='label'>YOUR ASSUMPTIONS</div>
+<div class='section'><div class='sectiontitle'>Portfolio & lifestyle</div><div class='inputs'><label>Current age<input id='age' type='number' value='52'></label><label>Selected stop-work age<input id='stop' type='number' value='55'></label><label>401(k)<input id='retireBal' type='number' value='1200000' step='10000'></label><label>Taxable investments<input id='taxBal' type='number' value='1100000' step='10000'></label><label>Annual 401(k) contribution<input id='contrib' type='number' value='32500' step='500'></label><label>Return %<input id='return' type='number' value='7' step='.25'></label><label>Annual spending<input id='spend' type='number' value='75000' step='2500'></label><label>Inflation %<input id='inflation' type='number' value='2.5' step='.1'></label></div></div>
+<div class='section'><div class='sectiontitle'>Civilian earned income</div><div class='inputs'><label>PA salary<input id='salary' type='number' value='100000' step='5000'></label><label>Call income / yr<input id='call' type='number' value='118800' step='1000'></label><label>Bonus / yr<input id='bonus' type='number' value='74000' step='1000'></label><label>Planning tax rate %<input id='taxRate' type='number' value='30' step='1'></label></div><div class='small' style='margin-top:7px'>Earned income is converted to an after-tax planning amount; investment taxes are not yet modeled.</div></div>
+<div class='section'><div class='sectiontitle'>VA compensation</div><div class='inputs'><label>VA scenario<select id='vaRating'><option value='80'>80%</option><option value='90'>90%</option><option value='100'>100%</option></select></label><label>Dependent status<select id='vaDep'><option value='alone'>Veteran alone</option><option value='spouse'>Spouse, no children</option></select></label></div><div class='small' id='vaDisplay' style='margin-top:8px'></div></div>
+<div class='section'><div class='sectiontitle'>Army Guard retirement</div><div class='inputs'><label>Current retirement points<input id='points' type='number' value='3100' step='10'></label><label>Future points / yr until stop<input id='futurePts' type='number' value='78' step='1'></label><label>Pension starts age<input id='guardAge' type='number' value='58'></label><label>O-6 High-3 monthly pay base<input id='high3' type='number' value='15500' step='100'></label></div><div class='small' id='guardDisplay' style='margin-top:8px'></div></div>
+<div class='section'><div class='sectiontitle'>Social Security</div><div class='inputs'><label>Starts age<input id='ssAge' type='number' value='67'></label><label>Annual benefit<input id='ss' type='number' value='36000' step='1000'></label></div></div>
+<div class='section'><div class='preset'><button onclick='setSpend(75000)'>$75K lifestyle</button><button onclick='setSpend(100000)'>$100K</button><button onclick='setSpend(150000)'>$150K</button></div></div></div>
+<div><div class='card'><section id="executiveScorecard">
+<h2>Rafael Retirement Scorecard <span style="font-size:.55em;opacity:.7">v7</span></h2>
+<div class="scoreboard">
+<div class="score"><div class="k">Earliest safe retirement</div><div class="v" id="scSafeAge">—</div><div class="s" id="scSafeNote">Based on confidence target</div></div>
+<div class="score"><div class="k">Monte Carlo success</div><div class="v" id="scSuccess">—</div><div class="s">Selected retirement age → 95</div></div>
+<div class="score"><div class="k">Income at 58</div><div class="v" id="sc58">—</div><div class="s">VA + Guard + other modeled income</div></div>
+<div class="score"><div class="k">Income at 67</div><div class="v" id="sc67">—</div><div class="s">Includes Social Security if started</div></div>
+<div class="score"><div class="k">Roth conversion</div><div class="v" id="scRoth">—</div><div class="s">Suggested annual amount</div></div>
+<div class="score"><div class="k">First RMD estimate</div><div class="v" id="scRmd">—</div><div class="s">At modeled RMD age</div></div>
+<div class="score"><div class="k">Portfolio at 90</div><div class="v" id="sc90">—</div><div class="s">Deterministic baseline</div></div>
+<div class="score"><div class="k">Lifestyle target</div><div class="v" id="scSpend">—</div><div class="s">Annual spending assumption</div></div>
+</div></section><section class="scenarioLab"><h2 style="margin:0">What-If Scenario Lab <span style="font-size:.55em;opacity:.7">v8</span></h2>
+<div class="scenarioBtns">
+<button onclick="applyScenario('va100')">100% VA</button>
+<button onclick="applyScenario('retire55')">Retire at 55</button>
+<button onclick="applyScenario('milTour')">1-Year Military Tour</button>
+<button onclick="applyScenario('spend150')">$150K Lifestyle</button>
+<button onclick="applyScenario('crash')">Market Crash Next Year</button>
+<button onclick="applyScenario('partTime')">Part-Time to 60</button>
+<button onclick="resetScenario()">Reset Baseline</button>
+</div><div class="scenarioStatus" id="scenarioStatus">Baseline assumptions active. Scenario changes are temporary until you reset or reload.</div></section><section class="scenarioLab"><h2 style="margin:0">Saved Plans <span style="font-size:.55em;opacity:.7">v9</span></h2><div class="scenarioBtns">
+<input id="planName" placeholder="Plan name e.g. Retire 55" style="padding:10px;border-radius:10px;min-width:210px">
+<button onclick="saveNamedPlan()">Save Current Plan</button><select id="savedPlans" style="padding:10px;border-radius:10px"></select>
+<button onclick="loadNamedPlan()">Load</button><button onclick="deleteNamedPlan()">Delete</button>
+</div><div class="scenarioStatus" id="saveStatus">Assumptions auto-save on this device.</div></section>
+<h2>When can I quit?</h2><div class='scenario' id='scenarios'></div><div class='note'>“Sustainable” here means the modeled portfolio remains above $0 through age 95. It is a deterministic planning screen, not a Monte Carlo probability.</div></div>
+<div class='card' style='margin-top:14px'><h2>Selected scenario trajectory</h2><div class='chart'><canvas id='chart'></canvas></div></div>
+<div class='card' style='margin-top:14px'><h2>Age-by-age projection</h2><div class='tablewrap'><table><thead><tr><th>Age</th><th>Start</th><th>Earned</th><th>VA</th><th>Guard</th><th>SS</th><th>Spending</th><th>End</th></tr></thead><tbody id='rows'></tbody></table></div></div></div></div>
+<div class='card' style='margin-top:14px'><div class='note'><b>Model notes:</b> 2026 VA base rates are built in for Veteran alone and spouse/no-children scenarios. VA is modeled as tax-free and inflation-adjusted. Guard retirement uses the legacy High-3 reserve formula: retirement points ÷ 360 × 2.5% × High-3 basic pay. The High-3 field is deliberately editable because your eventual retired-pay base depends on future military pay tables and timing. Civilian income defaults reflect a $100K part-time salary, roughly 11 call nights/month at $900, and an annualized bonus assumption based on recent quarterly bonuses; change any field you want.</div></div>
+</div><section><h2>Monte Carlo retirement stress test</h2><div class="grid cols4"><div class="box"><span class="small">SUCCESS TO 95</span><b id="mcSuccess">—</b></div><div class="box"><span class="small">10TH PERCENTILE</span><b id="mcP10">—</b><span class="small">ending portfolio</span></div><div class="box"><span class="small">MEDIAN</span><b id="mcP50">—</b><span class="small">ending portfolio</span></div><div class="box"><span class="small">90TH PERCENTILE</span><b id="mcP90">—</b><span class="small">ending portfolio</span></div></div><div class="grid cols4" style="margin-top:12px"><label>Trials<input id="mcTrials" type="number" value="10000" step="1000" min="1000" max="50000"></label><label>Return volatility %<input id="mcVol" type="number" value="14" step="0.5" min="1" max="40"></label><label>Success reserve at 95 $<input id="mcReserve" type="number" value="0" step="10000" min="0"></label><div><button id="runMC" style="margin-top:22px">Run 10,000 paths</button></div></div><div id="mcNote" class="small" style="margin-top:10px">Uses your selected stop age and all income/spending assumptions above. Annual returns vary randomly around your expected return; inflation remains at your selected assumption.</div></section><script>
+const defaults={age:52,stop:55,retireBal:1200000,taxBal:1100000,contrib:32500,return:7,spend:75000,inflation:2.5,salary:100000,call:118800,bonus:74000,taxRate:30,vaRating:'80',vaDep:'alone',points:3100,futurePts:78,guardAge:58,high3:15500,ssAge:67,ss:36000};
+const ids=Object.keys(defaults);ids.forEach(id=>document.getElementById(id).addEventListener('input',calc));
+const vaRates={alone:{80:2102.15,90:2362.30,100:3938.58},spouse:{80:2277.15,90:2559.30,100:4158.17}};
+function v(id){return +document.getElementById(id).value||0}function money(n,short=false){if(short){if(Math.abs(n)>=1e6)return '$'+(n/1e6).toFixed(2)+'M';if(Math.abs(n)>=1e3)return '$'+Math.round(n/1000)+'K'}return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n)}function setSpend(n){document.getElementById('spend').value=n;calc()}
+function guardForStop(stop){let years=Math.max(0,stop-v('age')),pts=v('points')+years*v('futurePts'),mult=pts/360*.025,annual=v('high3')*12*mult;return{pts,mult,annual}}
+
+function fedOrdinaryTax(income,status){
+ const sd=status==="mfj"?32200:16100; const x=Math.max(0,income-sd);
+ const b=status==="mfj"?[[24800,.10],[100800,.12],[211400,.22],[403550,.24],[512450,.32],[768700,.35],[1e99,.37]]:[[12400,.10],[50400,.12],[105700,.22],[201775,.24],[256225,.32],[640600,.35],[1e99,.37]];
+ let tax=0,lo=0; for(const [hi,r] of b){ if(x>lo){tax+=(Math.min(x,hi)-lo)*r;lo=hi;} if(x<=hi)break;} return tax;
+}
+function capGainsTax(gain,ordinary,status){ if(gain<=0)return 0; const zero=status==="mfj"?98900:49450, fifteen=status==="mfj"?613700:545500; let t=0; const taxable0=Math.max(0,zero-ordinary); const at0=Math.min(gain,taxable0); let rem=gain-at0; if(rem>0){const room=Math.max(0,fifteen-Math.max(ordinary,zero)); const at15=Math.min(rem,room);t+=at15*.15;rem-=at15;} if(rem>0)t+=rem*.20; return t; }
+function estimateTaxes(ordinary,gain){ const status=document.getElementById("filing")?.value||"single"; const nm=(+document.getElementById("nmRate")?.value||0)/100; return fedOrdinaryTax(ordinary,status)+capGainsTax(gain,ordinary,status)+(ordinary+gain)*nm; }
+function taxSettings(){return {status:document.getElementById("filing")?.value||"single",gainPct:(+document.getElementById("gainPct")?.value||35)/100,order:document.getElementById("withdrawOrder")?.value||"taxableFirst",rmdAge:+document.getElementById("rmdAge")?.value||75};}
+
+function bracketTop(rate,status){
+ const single={12:50400,22:105700,24:201775};
+ const mfj={12:100800,22:211400,24:403550};
+ return (status==="mfj"?mfj:single)[rate]||0;
+}
+function standardDeduction(status){return status==="mfj"?32200:16100;}
+function suggestedConversion(baseOrdinary){
+ const st=document.getElementById("rothStrategy")?.value||"none";
+ if(st==="none") return 0;
+ if(st==="custom") return Math.max(0,+document.getElementById("rothCustom")?.value||0);
+ const status=document.getElementById("filing")?.value||"single";
+ const top=bracketTop(+st,status);
+ // taxable-income bracket top plus standard deduction minus pre-conversion ordinary income
+ return Math.max(0,top+standardDeduction(status)-baseOrdinary);
+}
+function irmaaBand(magi,status){
+ const t=status==="mfj"?[218000,274000,342000,410000,750000]:[109000,137000,171000,205000,500000];
+ if(magi<=t[0])return {band:0,b:0,d:0,next:t[0]};
+ if(magi<=t[1])return {band:1,b:81.20,d:14.50,next:t[1]};
+ if(magi<=t[2])return {band:2,b:202.90,d:37.50,next:t[2]};
+ if(magi<=t[3])return {band:3,b:324.60,d:60.40,next:t[3]};
+ if(magi<t[4])return {band:4,b:446.30,d:83.30,next:t[4]};
+ return {band:5,b:487.00,d:91.00,next:Infinity};
+}
+function updateRothOptimizer(){
+ const status=document.getElementById("filing")?.value||"single";
+ const stop=+(document.getElementById("stopAge")?.value||58);
+ const pa=+(document.getElementById("paIncome")?.value||0);
+ const call=+(document.getElementById("callIncome")?.value||0);
+ const bonus=+(document.getElementById("bonusIncome")?.value||0);
+ const guard=+(document.getElementById("guardPension")?.value||0);
+ const age=+(document.getElementById("age")?.value||52);
+ // Use retirement-period recurring taxable income as baseline; earned income included if conversion begins before stop age.
+ const start=+(document.getElementById("rothStart")?.value||58), end=+(document.getElementById("rothEnd")?.value||74);
+ let base=(start<stop?(pa+call+bonus):0)+(start>=58?guard:0);
+ const conv=suggestedConversion(base);
+ const el=document.getElementById("rothSuggested"); if(el)el.textContent="$"+Math.round(conv).toLocaleString();
+ const note=document.getElementById("rothBracketNote"); if(note)note.textContent="Planning estimate at age "+start+"; recalculates as assumptions change.";
+ const ret=+(document.getElementById("returnRate")?.value||7)/100;
+ let roth=0;
+ for(let a=Math.max(age,start);a<=Math.min(75,end);a++){roth=(roth+conv)*(1+ret);}
+ if(end<75) for(let a=end+1;a<=75;a++)roth*=1+ret;
+ const r75=document.getElementById("rothAt75"); if(r75)r75.textContent="$"+Math.round(roth).toLocaleString();
+ const magi=base+conv, band=irmaaBand(magi,status), buffer=+(document.getElementById("irmaaBuffer")?.value||0);
+ const stEl=document.getElementById("irmaaStatus"), nEl=document.getElementById("irmaaNote");
+ if(stEl)stEl.textContent=band.band===0?"Below 2026 IRMAA":"IRMAA tier "+band.band;
+ if(nEl)nEl.textContent=band.band===0?("Estimated MAGI $"+Math.round(magi).toLocaleString()+". First 2026 threshold: $"+(status==="mfj"?"218,000":"109,000")+"."):("Estimated MAGI $"+Math.round(magi).toLocaleString()+". Approx. monthly surcharges: Part B +$"+band.b.toFixed(2)+", Part D +$"+band.d.toFixed(2)+".");
+}
+function project(stop){let age=v('age'),bal=v('retireBal')+v('taxBal'),r=v('return')/100,inf=v('inflation')/100,earnedGross=v('salary')+v('call')+v('bonus'),earned=earnedGross*(1-v('taxRate')/100),va0=vaRates[document.getElementById('vaDep').value][v('vaRating')]*12,g=guardForStop(stop),data=[];for(let a=age;a<=95;a++){let yr=a-age,start=bal,sp=v('spend')*Math.pow(1+inf,yr),e=a<stop?earned:0,va=va0*Math.pow(1+inf,yr),guard=a>=v('guardAge')?g.annual*Math.pow(1+inf,Math.max(0,a-v('guardAge'))):0,ss=a>=v('ssAge')?v('ss')*Math.pow(1+inf,Math.max(0,a-v('ssAge'))):0,c=a<stop?v('contrib'):0;bal=start*(1+r)+e+va+guard+ss-sp+c;if(bal<0)bal=0;data.push({a,start,e,va,guard,ss,sp,end:bal})}return{data,g,end:bal,min:Math.min(...data.map(d=>d.end))}}
+function calc(){let selected=project(v('stop')),g=selected.g,vaMonthly=vaRates[document.getElementById('vaDep').value][v('vaRating')];document.getElementById('mAssets').textContent=money(v('retireBal')+v('taxBal'),true);document.getElementById('mMult').textContent=(g.mult*100).toFixed(2)+'%';document.getElementById('mGuard').textContent=money(g.annual)+'/yr';document.getElementById('m90').textContent=money((selected.data.find(d=>d.a===90)||selected.data.at(-1)).end,true);document.getElementById('vaDisplay').textContent=`2026 VA ${v('vaRating')}%: ${money(vaMonthly)}/month • ${money(vaMonthly*12)}/year tax-free`;document.getElementById('guardDisplay').textContent=`At selected stop age: ${Math.round(g.pts).toLocaleString()} points → ${(g.mult*100).toFixed(2)}% multiplier → ${money(g.annual)}/year in today's pay-base assumption.`;
+let ages=[53,55,58,60];document.getElementById('scenarios').innerHTML=ages.map(a=>{let p=project(a),at90=(p.data.find(d=>d.a===90)||p.data.at(-1)).end,ok=p.end>0;return `<div class='box'><span class='small'>STOP AT ${a}</span><b>${money(at90,true)}</b><span class='small'>portfolio at 90</span><div style='margin-top:8px'><span class='badge ${ok?'goodbadge':'badbadge'}'>${ok?'Sustainable to 95':'Depletes by 95'}</span></div><div class='small' style='margin-top:7px'>Guard ${money(p.g.annual)}/yr</div></div>`}).join('');document.getElementById('rows').innerHTML=selected.data.filter(d=>d.a<=90).map(d=>`<tr><td>${d.a}</td><td>${money(d.start)}</td><td>${money(d.e)}</td><td class='green'>${money(d.va)}</td><td class='green'>${money(d.guard)}</td><td class='green'>${money(d.ss)}</td><td>${money(d.sp)}</td><td>${money(d.end)}</td></tr>`).join('');draw(selected.data)}
+function draw(data){let c=document.getElementById('chart'),ctx=c.getContext('2d'),dpr=devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;c.width=w*dpr;c.height=h*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);let pad={l:48,r:12,t:12,b:28},pw=w-pad.l-pad.r,ph=h-pad.t-pad.b,max=Math.max(...data.map(d=>d.end),1);ctx.font='11px system-ui';for(let i=0;i<=4;i++){let y=pad.t+ph*i/4;ctx.strokeStyle='#26344d';ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();ctx.fillStyle='#94a3b8';ctx.fillText(money(max*(1-i/4),true),2,y+4)}ctx.strokeStyle='#38bdf8';ctx.lineWidth=3;ctx.beginPath();data.forEach((d,i)=>{let x=pad.l+pw*i/(data.length-1),y=pad.t+ph*(1-d.end/max);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();[data[0].a,55,58,67,80,90].forEach(a=>{let i=data.findIndex(d=>d.a===a);if(i>=0){let x=pad.l+pw*i/(data.length-1);ctx.fillStyle='#94a3b8';ctx.fillText(a,x-7,h-7)}})}
+function randn(){let u=0,vv=0;while(u===0)u=Math.random();while(vv===0)vv=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*vv)}
+function runMC(){let trials=Math.max(1000,Math.min(50000,v('mcTrials')||10000)),vol=(v('mcVol')||14)/100,reserve=v('mcReserve'),stop=v('stop'),age=v('age'),inf=v('inflation')/100,earned=(v('salary')+v('call')+v('bonus'))*(1-v('taxRate')/100),va0=vaRates[document.getElementById('vaDep').value][v('vaRating')]*12,g=guardForStop(stop),mu=v('return')/100,ends=[],success=0;document.getElementById('runMC').textContent='Running…';setTimeout(()=>{for(let t=0;t<trials;t++){let bal=v('retireBal')+v('taxBal'),failed=false;for(let a=age;a<=95;a++){let yr=a-age,sp=v('spend')*Math.pow(1+inf,yr),e=a<stop?earned:0,va=va0*Math.pow(1+inf,yr),guard=a>=v('guardAge')?g.annual*Math.pow(1+inf,Math.max(0,a-v('guardAge'))):0,ss=a>=v('ssAge')?v('ss')*Math.pow(1+inf,Math.max(0,a-v('ssAge'))):0,c=a<stop?v('contrib'):0,r=mu+vol*randn();r=Math.max(r,-.95);bal=bal*(1+r)+e+va+guard+ss-sp+c;if(bal<=0){bal=0;failed=true;break}}ends.push(bal);if(!failed&&bal>=reserve)success++}ends.sort((a,b)=>a-b);let q=p=>ends[Math.min(ends.length-1,Math.floor(p*(ends.length-1)))];document.getElementById('mcSuccess').textContent=(100*success/trials).toFixed(1)+'%';document.getElementById('mcP10').textContent=money(q(.10),true);document.getElementById('mcP50').textContent=money(q(.50),true);document.getElementById('mcP90').textContent=money(q(.90),true);document.getElementById('mcNote').textContent=`${trials.toLocaleString()} simulated market paths • mean return ${v('return').toFixed(1)}% • volatility ${(vol*100).toFixed(1)}% • stop work at ${stop}. Hypothetical planning model, not a forecast.`;document.getElementById('runMC').textContent='Run '+trials.toLocaleString()+' paths'},20)}
+function runCompare(){let trials=Math.max(1000,Math.min(50000,v('mcTrials')||10000)),vol=(v('mcVol')||14)/100,reserve=v('mcReserve'),age=v('age'),inf=v('inflation')/100,earned=(v('salary')+v('call')+v('bonus'))*(1-v('taxRate')/100),va0=vaRates[document.getElementById('vaDep').value][v('vaRating')]*12,mu=v('return')/100,target=v('mcTarget')||90,stops=[age,53,55,58,60].filter((x,i,a)=>x>=age&&a.indexOf(x)===i).sort((a,b)=>a-b),stats={};stops.forEach(x=>stats[x]={success:0,ends:[]});document.getElementById('runCompare').textContent='Running…';setTimeout(()=>{for(let t=0;t<trials;t++){let shocks={};for(let a=age;a<=95;a++)shocks[a]=Math.max(mu+vol*randn(),-.95);for(const stop of stops){let bal=v('retireBal')+v('taxBal'),failed=false,g=guardForStop(stop);for(let a=age;a<=95;a++){let yr=a-age,sp=v('spend')*Math.pow(1+inf,yr),e=a<stop?earned:0,va=va0*Math.pow(1+inf,yr),guard=a>=v('guardAge')?g.annual*Math.pow(1+inf,Math.max(0,a-v('guardAge'))):0,ss=a>=v('ssAge')?v('ss')*Math.pow(1+inf,Math.max(0,a-v('ssAge'))):0,c=a<stop?v('contrib'):0;bal=bal*(1+shocks[a])+e+va+guard+ss-sp+c;if(bal<=0){bal=0;failed=true;break}}stats[stop].ends.push(bal);if(!failed&&bal>=reserve)stats[stop].success++}}let cards=[],earliest=null;for(const stop of stops){let st=stats[stop],rate=100*st.success/trials;st.ends.sort((a,b)=>a-b);let q=p=>st.ends[Math.min(st.ends.length-1,Math.floor(p*(st.ends.length-1)))];if(earliest===null&&rate>=target)earliest=stop;cards.push(`<div class='box'><span class='small'>${stop===age?'STOP NOW':'STOP AT '+stop}</span><b>${rate.toFixed(1)}%</b><span class='small'>success through 95</span><div style='margin-top:8px'><span class='badge ${rate>=target?'goodbadge':'badbadge'}'>${rate>=target?'Clears '+target+'% target':'Below '+target+'% target'}</span></div><div class='small' style='margin-top:7px'>P10 ${money(q(.10),true)} • Median ${money(q(.50),true)}</div></div>`)}document.getElementById('mcCompare').innerHTML=cards.join('');document.getElementById('mcCompareSummary').innerHTML=earliest!==null?`<b>Earliest modeled stop age clearing your ${target}% confidence target: ${earliest===age?'now (age '+age+')':'age '+earliest}.</b> Treat this as a planning signal, not a guarantee; assumptions matter more than extra simulation precision.`:`<b>None of the tested stop ages cleared your ${target}% confidence target.</b> Try lowering spending, changing return/volatility assumptions, or testing a later stop age.`;document.getElementById('runCompare').textContent='Compare stop ages'},20)}
+document.getElementById('runCompare').onclick=runCompare;
+document.getElementById('runMC').onclick=runMC;
+document.getElementById('reset').onclick=()=>{for(const [k,val] of Object.entries(defaults))document.getElementById(k).value=val;calc()};calc();
+</script>
+<script>
+document.addEventListener("DOMContentLoaded",()=>{updateRothOptimizer(); document.querySelectorAll("input,select").forEach(x=>x.addEventListener("input",updateRothOptimizer));});
+</script>
+<script>
+function money0(x){return "$"+Math.round(Number(x)||0).toLocaleString();}
+function readNum(ids,def=0){for(const id of ids){const e=document.getElementById(id);if(e&&e.value!==undefined&&e.value!=="")return +e.value||0;}return def;}
+function scorecardUpdate(){
+ const age=readNum(["age"],52), stop=readNum(["stopAge"],58), spend=readNum(["spending","annualSpending"],75000);
+ const va=readNum(["vaIncome","vaAnnual"],0), guard=readNum(["guardPension"],0), ss=readNum(["ssIncome","socialSecurity"],0);
+ const ssAge=readNum(["ssAge"],67), rmdAge=readNum(["rmdAge"],75);
+ const ret=readNum(["returnRate"],7)/100, k0=readNum(["k401","401k","retirement401k"],1200000);
+ const conv=suggestedConversion((stop<=58?0:readNum(["paIncome"],0))+guard);
+ let k=k0;
+ for(let a=age;a<rmdAge;a++){k=Math.max(0,k*(1+ret)-((a>=readNum(["rothStart"],58)&&a<=readNum(["rothEnd"],74))?conv:0));}
+ const firstRmd=k/24.6; // IRS Uniform Lifetime Table divisor at age 75
+ let p=k0+readNum(["taxable","taxableInvestments"],1100000);
+ for(let a=age;a<90;a++){p=p*(1+ret); if(a>=stop)p-=Math.max(0,spend-(va+(a>=58?guard:0)+(a>=ssAge?ss:0)));}
+ const income58=va+guard+(58>=ssAge?ss:0), income67=va+guard+(67>=ssAge?ss:0);
+ const set=(id,val)=>{const e=document.getElementById(id);if(e)e.textContent=val;};
+ set("sc58",money0(income58)); set("sc67",money0(income67)); set("scRoth",money0(conv)+"/yr"); set("scRmd",money0(firstRmd)); set("sc90",money0(Math.max(0,p))); set("scSpend",money0(spend)+"/yr");
+ // Harvest existing MC display if present; otherwise show selected age.
+ const probEl=document.querySelector('[id*="success" i],[class*="success" i]');
+ let prob=probEl&&probEl.id!=="scSuccess"?probEl.textContent:"Run MC";
+ set("scSuccess",prob||"Run MC");
+ // Try to derive earliest safe age from comparison table text.
+ let safe="See MC"; const body=document.body.innerText;
+ const m=body.match(/earliest[^\\n]*?(\\d{2})/i); if(m)safe="Age "+m[1];
+ set("scSafeAge",safe);
+}
+document.addEventListener("DOMContentLoaded",()=>{scorecardUpdate();document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",()=>setTimeout(scorecardUpdate,0)));setTimeout(scorecardUpdate,250);});
+</script><script>
+let scenarioBaseline=null;
+function elAny(ids){for(const id of ids){const e=document.getElementById(id);if(e)return e;}return null}
+function captureBaseline(){if(scenarioBaseline)return;scenarioBaseline={};document.querySelectorAll("input,select").forEach(e=>{if(e.id)scenarioBaseline[e.id]=e.value});}
+function setAny(ids,v){const e=elAny(ids);if(e){e.value=v;e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}));}}
+function applyScenario(type){
+ captureBaseline(); resetScenario(false); let msg="";
+ if(type==="va100"){const v=elAny(["vaRating"]);if(v){v.value="100";v.dispatchEvent(new Event("change",{bubbles:true}));}else setAny(["vaIncome","vaAnnual"],50000);msg="100% VA scenario applied."}
+ if(type==="retire55"){setAny(["stopAge"],55);msg="Retire-at-55 scenario applied."}
+ if(type==="milTour"){let pts=elAny(["points","guardPoints"]);if(pts)setAny([pts.id],(+pts.value||3100)+365); let gi=elAny(["militaryIncome","guardIncome"]);if(gi)setAny([gi.id],(+gi.value||0)+150000);msg="One-year military-tour stress test: +365 retirement points; military income added where supported."}
+ if(type==="spend150"){setAny(["spending","annualSpending"],150000);msg="$150,000 annual lifestyle scenario applied."}
+ if(type==="crash"){let t=elAny(["taxable","taxableInvestments"]),k=elAny(["k401","401k","retirement401k"]);if(t)setAny([t.id],Math.round((+t.value||0)*.75));if(k)setAny([k.id],Math.round((+k.value||0)*.75));msg="Immediate 25% portfolio shock applied to taxable and 401(k) balances."}
+ if(type==="partTime"){setAny(["stopAge"],60);let pa=elAny(["paIncome"]);if(pa)setAny(["paIncome"],100000);msg="Part-time-to-60 scenario applied using $100,000 annual PA income."}
+ const st=document.getElementById("scenarioStatus");if(st)st.textContent=msg+" Use Reset Baseline to undo.";
+ setTimeout(()=>{if(typeof scorecardUpdate==="function")scorecardUpdate();if(typeof updateRothOptimizer==="function")updateRothOptimizer();},0);
+}
+function resetScenario(show=true){if(!scenarioBaseline){captureBaseline();return;}for(const [id,v] of Object.entries(scenarioBaseline)){const e=document.getElementById(id);if(e){e.value=v;e.dispatchEvent(new Event("input",{bubbles:true}));}}if(show){const st=document.getElementById("scenarioStatus");if(st)st.textContent="Baseline assumptions restored.";}}
+document.addEventListener("DOMContentLoaded",captureBaseline);
+</script><script>
+const STORAGE_KEY="rfc-v9-current", PLANS_KEY="rfc-v9-plans";
+function snapshotInputs(){const o={};document.querySelectorAll("input,select").forEach(e=>{if(e.id&&e.id!=="planName"&&e.id!=="savedPlans")o[e.id]=e.value});return o}
+function restoreInputs(o){if(!o)return;Object.entries(o).forEach(([id,v])=>{const e=document.getElementById(id);if(e){e.value=v;e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}));}})}
+function autoSave(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(snapshotInputs()))}catch(e){}}
+function refreshPlans(){const sel=document.getElementById("savedPlans");if(!sel)return;const plans=JSON.parse(localStorage.getItem(PLANS_KEY)||"{}");sel.innerHTML=Object.keys(plans).sort().map(n=>`<option>${n}</option>`).join("")}
+function saveNamedPlan(){const n=(document.getElementById("planName").value||"").trim();if(!n)return;const plans=JSON.parse(localStorage.getItem(PLANS_KEY)||"{}");plans[n]=snapshotInputs();localStorage.setItem(PLANS_KEY,JSON.stringify(plans));refreshPlans();document.getElementById("savedPlans").value=n;document.getElementById("saveStatus").textContent=`Saved "${n}" on this device.`}
+function loadNamedPlan(){const n=document.getElementById("savedPlans").value;if(!n)return;const plans=JSON.parse(localStorage.getItem(PLANS_KEY)||"{}");restoreInputs(plans[n]);autoSave();document.getElementById("saveStatus").textContent=`Loaded "${n}".`}
+function deleteNamedPlan(){const n=document.getElementById("savedPlans").value;if(!n)return;const plans=JSON.parse(localStorage.getItem(PLANS_KEY)||"{}");delete plans[n];localStorage.setItem(PLANS_KEY,JSON.stringify(plans));refreshPlans();document.getElementById("saveStatus").textContent=`Deleted "${n}".`}
+document.addEventListener("DOMContentLoaded",()=>{try{restoreInputs(JSON.parse(localStorage.getItem(STORAGE_KEY)||"null"))}catch(e){}refreshPlans();document.querySelectorAll("input,select").forEach(e=>e.addEventListener("change",autoSave));if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});});
+</script></body></html><section><h2>Monte Carlo: When can I quit?</h2><div class="controls"><label>Confidence target %<input id="mcTarget" type="number" value="90" min="50" max="99" step="1"></label><div><button id="runCompare" style="margin-top:22px">Compare stop ages</button></div></div><div id="mcCompareSummary" class="callout">Run the comparison to test stopping now, 53, 55, 58, and 60 on identical simulated market paths.</div><div id="mcCompare" class="grid4"></div><div class="small" style="margin-top:10px">Each age uses the same randomized annual-return shocks, making the success rates directly comparable. Success means the portfolio remains above your selected reserve through age 95.</div></section>
